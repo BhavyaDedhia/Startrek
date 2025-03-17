@@ -18,15 +18,15 @@ export default function Profile() {
     }
   }, []);
 
-  // ✅ Fetch tickets when "Ticket Tracking" is selected
+  // ✅ Fetch only the logged-in user's tickets
   useEffect(() => {
-    if (view === "tickets") {
-      fetch("/api/tickets")
+    if (view === "tickets" && user) {
+      fetch(`/api/tickets?name=${encodeURIComponent(user.name)}`)
         .then((res) => res.json())
         .then((data) => setTickets(data))
         .catch((err) => console.error("Error fetching tickets:", err));
     }
-  }, [view]);
+  }, [view, user]);
 
   // ✅ Submit a new query (Generate a Ticket)
   const handleSubmitQuery = async () => {
@@ -34,7 +34,7 @@ export default function Profile() {
     const res = await fetch("/api/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, userName: user.name }),
+      body: JSON.stringify({ query, name: user.name }), // ✅ Using "name" instead of "userName"
     });
     if (res.ok) {
       const newTicket = await res.json();
@@ -43,18 +43,15 @@ export default function Profile() {
     }
   };
 
-  // ✅ Function to mark ticket as "Resolved"
+  // ✅ Mark ticket as "Resolved" and delete it from UI & Database
   const handleResolveTicket = async (ticketId) => {
     const res = await fetch(`/api/tickets/${ticketId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "Resolved" }),
+      method: "DELETE",
     });
 
     if (res.ok) {
-      setTickets(tickets.map(ticket => 
-        ticket._id === ticketId ? { ...ticket, status: "Resolved" } : ticket
-      ));
+      // Remove the ticket from the state after deletion
+      setTickets(tickets.filter(ticket => ticket._id !== ticketId));
     }
   };
 
@@ -66,28 +63,48 @@ export default function Profile() {
       <div className="w-64 bg-white shadow-md p-6">
         <h1 className="text-2xl font-bold text-gray-700 mb-6">NeoAssist</h1>
         <ul className="space-y-4">
-          <li onClick={() => setView("admin")} className={`text-gray-700 font-medium cursor-pointer hover:text-blue-500 ${view === "admin" ? "text-blue-500 font-bold" : ""}`}>
+          <li onClick={() => setView("admin")} 
+            className={`cursor-pointer font-medium p-2 rounded-md ${
+              view === "admin" ? "bg-blue-500 text-white" : "text-gray-700 hover:text-blue-500"
+            }`}
+          >
             Admin
           </li>
-          <li onClick={() => setView("passbook")} className={`text-gray-700 font-medium cursor-pointer hover:text-blue-500 ${view === "passbook" ? "text-blue-500 font-bold" : ""}`}>
+          <li onClick={() => setView("passbook")} 
+            className={`cursor-pointer font-medium p-2 rounded-md ${
+              view === "passbook" ? "bg-blue-500 text-white" : "text-gray-700 hover:text-blue-500"
+            }`}
+          >
             Passbook
           </li>
-          <li onClick={() => setView("query")} className={`text-gray-700 font-medium cursor-pointer hover:text-blue-500 ${view === "query" ? "text-blue-500 font-bold" : ""}`}>
+          <li onClick={() => setView("query")} 
+            className={`cursor-pointer font-medium p-2 rounded-md ${
+              view === "query" ? "bg-blue-500 text-white" : "text-gray-700 hover:text-blue-500"
+            }`}
+          >
             Query
           </li>
-          <li onClick={() => setView("tickets")} className={`text-gray-700 font-medium cursor-pointer hover:text-blue-500 ${view === "tickets" ? "text-blue-500 font-bold" : ""}`}>
+          <li onClick={() => setView("tickets")} 
+            className={`cursor-pointer font-medium p-2 rounded-md ${
+              view === "tickets" ? "bg-blue-500 text-white" : "text-gray-700 hover:text-blue-500"
+            }`}
+          >
             Ticket Tracking
           </li>
-          <li onClick={() => setView("fraud")} className={`text-gray-700 font-medium cursor-pointer hover:text-blue-500 ${view === "fraud" ? "text-blue-500 font-bold" : ""}`}>
+          <li onClick={() => setView("fraud")} 
+            className={`cursor-pointer font-medium p-2 rounded-md ${
+              view === "fraud" ? "bg-blue-500 text-white" : "text-gray-700 hover:text-blue-500"
+            }`}
+          >
             Fraud Detection
           </li>
-          <li className="text-gray-700 font-medium cursor-pointer hover:text-blue-500">Help & FAQ</li>
+          <li className="cursor-pointer font-medium p-2 text-gray-700 hover:text-blue-500">Help & FAQ</li>
           <li 
             onClick={() => {
               localStorage.removeItem("user");
               router.push("/login");
             }} 
-            className="text-red-500 font-medium cursor-pointer hover:text-red-700 mt-6"
+            className="text-red-500 font-medium cursor-pointer hover:text-red-700 mt-6 p-2 rounded-md"
           >
             Log Out
           </li>
@@ -123,21 +140,28 @@ export default function Profile() {
 
         {view === "tickets" && (
           <>
-            <h1 className="text-3xl font-semibold mb-4">Ticket Tracking</h1>
+            <h1 className="text-3xl font-semibold mb-4">Your Ticket Tracking</h1>
+            
+            {/* Ticket List */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {tickets.length === 0 ? (
                 <p className="text-gray-500">No tickets found.</p>
               ) : (
                 tickets.map((ticket) => (
-                  <div key={ticket._id} className="bg-white p-4 rounded-lg shadow-md">
-                    <h2 className="text-lg font-semibold">{ticket.category} - {ticket.query}</h2>
-                    <p className="text-gray-600 text-sm">Asked by: {ticket.userName}</p>
-                    <p className={`mt-2 text-sm font-semibold ${ticket.status === "Resolved" ? "text-green-500" : "text-yellow-500"}`}>
-                      Status: {ticket.status}
-                    </p>
-                    <p className="text-gray-400 text-xs">Created At: {new Date(ticket.createdAt).toLocaleString()}</p>
+                  <div key={ticket._id} className="bg-white p-6 rounded-lg shadow-md flex flex-col justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-800">{ticket.category}</h2>
+                      <p className="text-gray-600 text-sm mt-2">{ticket.query}</p>
+                      <p className={`mt-2 text-sm font-semibold ${ticket.status === "Resolved" ? "text-green-500" : "text-yellow-500"}`}>
+                        Status: {ticket.status}
+                      </p>
+                      <p className="text-gray-400 text-xs mt-2">Created At: {new Date(ticket.createdAt).toLocaleString()}</p>
+                    </div>
                     {ticket.status !== "Resolved" && (
-                      <button onClick={() => handleResolveTicket(ticket._id)} className="mt-3 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">
+                      <button 
+                        onClick={() => handleResolveTicket(ticket._id)}
+                        className="mt-4 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 w-full"
+                      >
                         Mark as Resolved
                       </button>
                     )}
