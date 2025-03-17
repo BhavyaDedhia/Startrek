@@ -33,7 +33,7 @@ export default function Login() {
       <div className="w-full max-w-md bg-white p-8 shadow-xl rounded-lg">
         {/* Logo */}
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">Union Bank</h1>
+          <h1 className="text-3xl font-bold text-gray-800">NeoAssist</h1>
           <p className="text-gray-500">Secure Banking Login</p>
         </div>
 
