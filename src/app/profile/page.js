@@ -11,35 +11,32 @@ export default function Profile() {
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     } else {
-      router.push("/login"); // Redirect to login if not authenticated
+      router.push("/login"); // ✅ Redirects to login if user is not authenticated
     }
   }, []);
 
-  if (!user) return <p className="text-center mt-10">Loading...</p>;
+  if (!user) return <p className="text-center mt-10 text-lg font-semibold">Loading...</p>;
 
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <div className="w-64 bg-white shadow-md p-6">
-        <h1 className="text-2xl font-bold text-gray-700 mb-6">NeoAssist Bank</h1>
+        <h1 className="text-2xl font-bold text-gray-700 mb-6">NeoAssist</h1>
         <ul className="space-y-4">
-          <li className="text-gray-700 font-medium cursor-pointer hover:text-blue-500">
-            Dashboard
-          </li>
-          <li className="text-gray-700 font-medium cursor-pointer hover:text-blue-500">
-            Accounts
-          </li>
-          <li className="text-gray-700 font-medium cursor-pointer hover:text-blue-500">
-            Passbook
-          </li>
-          <li className="text-gray-700 font-medium cursor-pointer hover:text-blue-500">
-            Support Tickets
-          </li>
-          <li className="text-gray-700 font-medium cursor-pointer hover:text-blue-500">
-            Help & FAQ
-          </li>
-          <li className="text-gray-700 font-medium cursor-pointer hover:text-red-500 mt-6">
-            Logout
+          <li className="text-gray-700 font-medium cursor-pointer hover:text-blue-500">Admin</li>
+          <li className="text-gray-700 font-medium cursor-pointer hover:text-blue-500">Passbook</li>
+          <li className="text-gray-700 font-medium cursor-pointer hover:text-blue-500">Query</li>
+          <li className="text-gray-700 font-medium cursor-pointer hover:text-blue-500">Ticket Tracking</li>
+          <li className="text-gray-700 font-medium cursor-pointer hover:text-blue-500">Fraud Detection</li>
+          <li className="text-gray-700 font-medium cursor-pointer hover:text-blue-500">Help & FAQ</li>
+          <li 
+            onClick={() => {
+              localStorage.removeItem("user");
+              router.push("/login");
+            }} 
+            className="text-red-500 font-medium cursor-pointer hover:text-red-700 mt-6"
+          >
+            Log Out
           </li>
         </ul>
       </div>
@@ -47,10 +44,8 @@ export default function Profile() {
       {/* Main Content */}
       <div className="flex-1 p-8">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-semibold">Welcome back, {user.email}</h1>
-          <button className="bg-black text-white px-4 py-2 rounded-md">
-            View Accounts
-          </button>
+          <h1 className="text-3xl font-semibold">Welcome back, {user.username || "User"}!</h1>
+          <button className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800">View Accounts</button>
         </div>
 
         {/* Account Overview */}
